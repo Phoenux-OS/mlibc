@@ -80,6 +80,11 @@ elif host_machine.system() == 'qword'
 	rtdl_include_dirs += include_directories('sysdeps/qword/include')
 	libc_include_dirs += include_directories('sysdeps/qword/include')
 	subdir('sysdeps/qword')
+elif host_machine.system() == 'phoenux'
+	disable_linux_option = true
+	rtdl_include_dirs += include_directories('sysdeps/phoenux/include')
+	libc_include_dirs += include_directories('sysdeps/phoenux/include')
+	subdir('sysdeps/phoenux')
 elif host_machine.system() == 'sigma'
 	disable_linux_option = true
 	rtdl_include_dirs += include_directories('sysdeps/sigma/include')
@@ -128,7 +133,7 @@ internal_sources = [
 	'options/internal/gcc-extra/cxxabi.cpp',
 	'options/internal/gcc-extra/mlibc_crtbegin.S',
 	'options/internal/gcc-extra/mlibc_crtend.S',
-	'options/internal/x86_64/setjmp.S',
+	'options/internal' / host_machine.cpu_family() / 'setjmp.S',
 ]
 
 if not no_headers
@@ -169,30 +174,23 @@ subdir('options/glibc')
 subdir('options/linux')
 
 if not headers_only
-	ldso_lib = shared_library('ld', rtdl_sources,
-			name_prefix: '',
-			cpp_args: ['-fvisibility=hidden', '-DMLIBC_BUILDING_RTDL', '-DFRIGG_HAVE_LIBC'],
-			include_directories: rtdl_include_dirs,
-			dependencies: rtdl_deps,
-			install: true)
-
-	shared_library('c',
+	static_library('c',
 			[
 				libc_sources,
 				internal_sources,
 				ansi_sources,
 				lsb_sources,
 			],
+            pic: false,
 			cpp_args: ['-DFRIGG_HAVE_LIBC'],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps,
-			link_with: [ldso_lib],
 			link_whole: libc_sublibs,
 			install: true)
 
-	shared_library('dl', 'libdl/src/dummy.cpp', install: true)
-	shared_library('m', 'libm/src/dummy.cpp', install: true)
-	shared_library('pthread', 'libpthread/src/dummy.cpp', install: true)
-	shared_library('rt', 'librt/src/dummy.cpp', install: true)
-	shared_library('util', 'libutil/src/dummy.cpp', install: true)
+	static_library('dl', 'libdl/src/dummy.cpp', pic: false, install: true)
+	static_library('m', 'libm/src/dummy.cpp', pic: false, install: true)
+	static_library('pthread', 'libpthread/src/dummy.cpp', pic: false, install: true)
+	static_library('rt', 'librt/src/dummy.cpp', pic: false, install: true)
+	static_library('util', 'libutil/src/dummy.cpp', pic: false, install: true)
 endif
