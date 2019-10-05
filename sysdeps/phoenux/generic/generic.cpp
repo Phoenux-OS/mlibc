@@ -19,6 +19,7 @@ namespace mlibc {
         );
     }
     void sys_libc_panic() {
+        sys_libc_log("\nmlibc: panic.\n");
         for (;;);
     }
 
@@ -33,13 +34,12 @@ namespace mlibc {
         asm volatile (
             "mov $0x10, %%eax;"
             "int $0x80;"
-            "mov %%eax, %0;"
+            "mov %%eax, %%ebx;"
             "mov $0x11, %%eax;"
             "int $0x80;"
-            "mov %%eax, %1;"
-            : "=r" (heap_base), "=r" (heap_size)
+            : "=b" (heap_base), "=a" (heap_size)
             :
-            : "eax", "edx"
+            : "edx"
         );
         size_t ptr = heap_base + heap_size;
         asm volatile (
@@ -71,7 +71,7 @@ namespace mlibc {
 
     int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
         off_t ret;
-/*
+
         switch (whence) {
             case SEEK_SET:
                 whence = 0;
@@ -87,7 +87,7 @@ namespace mlibc {
         );
 
         *new_offset = ret;
-*/
+
         return 0;
     }
 
@@ -97,7 +97,7 @@ namespace mlibc {
     int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
         asm volatile ("int $0x80"
                 :
-                : "a"(0x31), "c"(fd), "d"(buf), "D"(count)
+                : "a"(0x2d), "c"(fd), "d"(buf), "D"(count)
         );
 
         *bytes_written = count;
